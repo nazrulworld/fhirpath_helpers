@@ -34,7 +34,7 @@ setup(
     description="A helper package for https://pypi.org/project/fhirpath/",
     entry_points={
         'console_scripts': [
-            'fhirpath_helpers=fhirpath_helpers.cli:main',
+            'fhirpath_cli=fhirpath_helpers.cli:main',
         ],
     },
     install_requires=requirements,

@@ -8,6 +8,7 @@
 Based on https://www.hl7.org/fhir/R4/datatypes.html, for other version
 need to make compatibility
 """
+from copy import deepcopy
 
 __author__ = "Md Nazrul Islam <email2nazrul@gmail.com>"
 date_pattern = "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?"
@@ -35,16 +36,7 @@ Date = {
 }
 Time = {"type": "date", "format": "basic_t_time_no_millis", "store": False}
 
-Reference = {
-    "properties": {
-        "reference": {
-            "type": "text",
-            "index": True,
-            "store": False,
-            "analyzer": "fhir_reference_analyzer",
-        }
-    }
-}
+Reference = {"properties": {"reference": KeywordToken}}
 
 Attachment = {
     "properties": {"url": Token, "language": Token, "title": Text, "creation": Date}
@@ -75,6 +67,7 @@ Quantity = {
 }
 
 Money = {"properties": {"value": Float, "currency": Token}}
+Money_STU3 = Quantity
 Range = {"properties": {"high": Quantity, "low": Quantity}}
 Ratio = {"properties": {"numerator": Quantity, "denominator": Quantity}}
 
@@ -111,8 +104,8 @@ ContactPoint = {
     }
 }
 
-ContactDetail = {"properties": {"name": Token, "telecom": ContactPoint}}
 
+ContactDetail = {"properties": {"name": Token, "telecom": ContactPoint}}
 ContactDetail["properties"]["telecom"].update({"type": "nested"})
 
 Annotation = {
@@ -146,6 +139,17 @@ Dosage = {
         "maxDosePerLifetime": Quantity,
     }
 }
+Dosage_STU3 = {
+    "properties": {
+        "asNeededBoolean": Boolean,
+        "asNeededCodeableConcept": CodeableConcept,
+        "doseQuantity": Quantity,
+        "doseRange": Range,
+        "site": CodeableConcept,
+        "text": Text,
+        "timing": Timing,
+    }
+}
 
 RelatedArtifact = {"properties": {"type": Token, "url": Token, "resource": Reference}}
 
@@ -157,6 +161,7 @@ Signature = {
         "whoUri": Token,
     }
 }
+
 # Common
 Id = Token
 Meta = {"properties": {"versionId": Token, "lastUpdated": Date, "profile": Token}}
@@ -199,3 +204,5 @@ fhir_data_types_maps = {
     "Age": Age,
     "Reference": Reference,
 }
+fhir_data_types_maps_STU3 = deepcopy(fhir_data_types_maps)
+fhir_data_types_maps_STU3.update({"Dosage": Dosage_STU3, "Money": Money_STU3})

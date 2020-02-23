@@ -3,6 +3,7 @@ from collections import defaultdict
 from fhirpath.fhirspec import FhirSpecFactory
 from fhirpath.enums import FHIR_VERSION
 from .pytypes import fhir_data_types_maps
+from .pytypes import fhir_data_types_maps_STU3
 import sys
 import click
 import DateTime
@@ -34,7 +35,7 @@ def generate_mappings(fhir_release=None):
 
     maps = dict()
     for resource, paths_def in elements_paths.items():
-        maps[resource] = create_resource_mapping(paths_def)
+        maps[resource] = create_resource_mapping(paths_def, fhir_release)
 
     return maps
 
@@ -94,13 +95,18 @@ def add_mapping_meta(resource, mappings, fhir_release):
     return data
 
 
-def create_resource_mapping(elements_paths_def):
+def create_resource_mapping(elements_paths_def, fhir_release):
     """ """
     mapped = dict()
+    if fhir_release == "STU3":
+        data_maps = fhir_data_types_maps_STU3
+    else:
+        data_maps = fhir_data_types_maps
+
     for path_, code, multiple in elements_paths_def:
         name = path_.split(".")[-1]
         try:
-            map_ = fhir_data_types_maps[code].copy()
+            map_ = data_maps[code].copy()
         except KeyError:
             click.echo(f"datatype {code} doesnt found!", color=click.style("yellow"))
             continue
@@ -110,7 +116,7 @@ def create_resource_mapping(elements_paths_def):
 
         mapped[name] = map_
     # add extra
-    mapped["resourceType"] = fhir_data_types_maps["code"].copy()
+    mapped["resourceType"] = data_maps["code"].copy()
     return mapped
 
 
