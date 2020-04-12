@@ -11,6 +11,20 @@ import json
 
 __author__ = "Md Nazrul Islam <email2nazrul@gmail.com>"
 
+ignored_datatype = [
+    "markdown",
+    "UsageContext",
+    "TriggerDefinition",
+    "DataRequirement",
+    "ParameterDefinition",
+    "MarketingStatus",
+    "ProdCharacteristic",
+    "SampledData",
+    "Contributor",
+    "ElementDefinition",
+    "ProductShelfLife"
+]
+
 
 def generate_mappings(fhir_release=None):
     """ """
@@ -108,8 +122,10 @@ def create_resource_mapping(elements_paths_def, fhir_release):
         try:
             map_ = data_maps[code].copy()
         except KeyError:
-            click.echo(f"datatype {code} doesnt found!", color=click.style("yellow"))
-            continue
+            if code in ignored_datatype:
+                click.echo(f"datatype {code} doesnt found!", color=click.style("yellow"))
+                continue
+            raise
 
         if multiple and "type" not in map_:
             map_.update({"type": "nested"})

@@ -25,7 +25,7 @@ Text = {
     "index": True,
     "store": False,
     "analyzer": "standard",
-    "index_prefixes": {"min_chars": 1, "max_chars": 10},
+    #    "index_prefixes": {"min_chars": 1, "max_chars": 10},
 }
 SearchableText = {"type": "text", "index": True, "analyzer": "standard", "store": False}
 
@@ -92,6 +92,7 @@ HumanName = {
         "period": Period,
     }
 }
+
 Duration = Quantity
 
 ContactPoint = {
@@ -151,14 +152,47 @@ Dosage_STU3 = {
     }
 }
 
-RelatedArtifact = {"properties": {"type": Token, "url": Token, "resource": Reference}}
+RelatedArtifact = {
+    "properties": {
+        "type": Token,
+        "url": Token,
+        "resource": Reference,
+        "label": Text,
+        "display": Text,
+    }
+}
+
+RelatedArtifact_STU3 = {
+    "properties": {"type": Token, "url": Token, "resource": Reference}
+}
+
 
 Signature = {
+    "properties": {
+        "type": Coding,
+        "when": Date,
+        "who": Reference,
+        "targetFormat": Token,
+        "sigFormat": Token,
+        "onBehalfOf": Reference,
+    }
+}
+
+Signature_STU3 = {
     "properties": {
         "contentType": Token,
         "when": Date,
         "whoReference": Reference,
         "whoUri": Token,
+    }
+}
+Population = {
+    "properties": {
+        "ageRange": Range,
+        "ageCodeableConcept": CodeableConcept,
+        "gender": CodeableConcept,
+        "race": CodeableConcept,
+        "physiologicalCondition": CodeableConcept,
     }
 }
 
@@ -189,6 +223,7 @@ fhir_data_types_maps = {
     "CodeableConcept": CodeableConcept,
     "Quantity": Quantity,
     "Money": Money,
+    "Duration": Duration,
     "Range": Range,
     "Ratio": Ratio,
     "Period": Period,
@@ -203,6 +238,16 @@ fhir_data_types_maps = {
     "ContactDetail": ContactDetail,
     "Age": Age,
     "Reference": Reference,
+    "RelatedArtifact": RelatedArtifact,
+    "Signature": Signature,
+    "Population": Population,
 }
 fhir_data_types_maps_STU3 = deepcopy(fhir_data_types_maps)
-fhir_data_types_maps_STU3.update({"Dosage": Dosage_STU3, "Money": Money_STU3})
+fhir_data_types_maps_STU3.update(
+    {
+        "Dosage": Dosage_STU3,
+        "Money": Money_STU3,
+        "RelatedArtifact": RelatedArtifact_STU3,
+        "Signature": Signature_STU3,
+    }
+)
