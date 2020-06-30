@@ -28,7 +28,7 @@ ignored_datatype = [
 
 def generate_mappings(fhir_release=None):
     """ """
-    fhir_release = fhir_release or FHIR_VERSION.R4.value
+    fhir_release = fhir_release or FHIR_VERSION.R4.name
 
     fhir_spec = FhirSpecFactory.from_release(fhir_release)
 
