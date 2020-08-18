@@ -36,19 +36,12 @@ Date = {
 }
 Time = {"type": "date", "format": "basic_t_time_no_millis", "store": False}
 
-Reference = {"properties": {"reference": KeywordToken}}
-
-Attachment = {
-    "properties": {"url": Token, "language": Token, "title": Text, "creation": Date}
-}
+Attachment = {"properties": {"url": Token, "language": Token, "title": Text, "creation": Date}}
 
 Coding = {"properties": {"system": Token, "code": Token, "display": Token}}
 
 CodeableConcept = {
-    "properties": {
-        "text": Text,
-        "coding": {"type": "nested", "properties": Coding["properties"]},
-    }
+    "properties": {"text": Text, "coding": {"type": "nested", "properties": Coding["properties"]}}
 }
 
 Period = {"properties": {"start": Date, "end": Date}}
@@ -62,9 +55,10 @@ Identifier = {
         "type": {"properties": {"text": Text}},
     }
 }
-Quantity = {
-    "properties": {"value": Float, "code": Token, "system": Token, "unit": Token}
-}
+
+Reference = {"properties": {"reference": KeywordToken, "identifier": Identifier}}
+
+Quantity = {"properties": {"value": Float, "code": Token, "system": Token, "unit": Token}}
 
 Money = {"properties": {"value": Float, "currency": Token}}
 Money_STU3 = Quantity
@@ -90,19 +84,13 @@ HumanName = {
         "given": Token,
         "use": Token,
         "period": Period,
-    }
+    },
 }
 
 Duration = Quantity
 
 ContactPoint = {
-    "properties": {
-        "period": Period,
-        "rank": Integer,
-        "system": Token,
-        "use": Token,
-        "value": Text,
-    }
+    "properties": {"period": Period, "rank": Integer, "system": Token, "use": Token, "value": Text}
 }
 
 
@@ -110,12 +98,7 @@ ContactDetail = {"properties": {"name": Token, "telecom": ContactPoint}}
 ContactDetail["properties"]["telecom"].update({"type": "nested"})
 
 Annotation = {
-    "properties": {
-        "authorReference": Reference,
-        "authorString": Text,
-        "text": Text,
-        "time": Date,
-    }
+    "properties": {"authorReference": Reference, "authorString": Text, "text": Text, "time": Date}
 }
 
 Dosage = {
@@ -162,9 +145,7 @@ RelatedArtifact = {
     }
 }
 
-RelatedArtifact_STU3 = {
-    "properties": {"type": Token, "url": Token, "resource": Reference}
-}
+RelatedArtifact_STU3 = {"properties": {"type": Token, "url": Token, "resource": Reference}}
 
 
 Signature = {
@@ -179,12 +160,7 @@ Signature = {
 }
 
 Signature_STU3 = {
-    "properties": {
-        "contentType": Token,
-        "when": Date,
-        "whoReference": Reference,
-        "whoUri": Token,
-    }
+    "properties": {"contentType": Token, "when": Date, "whoReference": Reference, "whoUri": Token}
 }
 Population = {
     "properties": {
@@ -198,7 +174,14 @@ Population = {
 
 # Common
 Id = Token
-Meta = {"properties": {"versionId": Token, "lastUpdated": Date, "profile": Token}}
+Meta = {
+    "properties": {
+        "versionId": Token,
+        "lastUpdated": Date,
+        "profile": Token,
+        "tag": {**Coding, "type": "nested"},
+    }
+}
 
 fhir_data_types_maps = {
     "boolean": Boolean,
