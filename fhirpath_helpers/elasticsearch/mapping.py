@@ -82,11 +82,8 @@ def extract_elements_paths(elements):
     paths = list()
 
     for el in elements:
-        if el.represents_class:
+        if el.is_main_profile_element:
             continue
-        # FIXME
-        # if len(el.path.split(".")) != 2:
-        #     continue
         if len(el.definition.types) == 0:
             continue
 
