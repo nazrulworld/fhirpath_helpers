@@ -17,8 +17,13 @@ Boolean = {"type": "boolean", "store": False}
 Float = {"type": "float", "store": False}
 Integer = {"type": "integer", "store": False}
 Long = {"type": "long", "store": False}
-Token = {"type": "keyword", "index": True, "store": False}
-KeywordToken = {"type": "keyword", "index": True, "store": False}
+Token = {"type": "keyword", "index": True, "store": False, "normalizer": "fhir_normalizer"}
+ReferenceToken = {
+    "type": "text",
+    "index": True,
+    "store": False,
+    "analyzer": "fhir_reference_analyzer",
+}
 PathToken = {"type": "text", "index": True, "store": False, "analyzer": "path_analyzer"}
 Text = {
     "type": "text",
@@ -56,7 +61,7 @@ Identifier = {
     }
 }
 
-Reference = {"properties": {"reference": KeywordToken, "identifier": Identifier}}
+Reference = {"properties": {"reference": ReferenceToken, "identifier": Identifier}}
 
 Quantity = {"properties": {"value": Float, "code": Token, "system": Token, "unit": Token}}
 
@@ -94,8 +99,7 @@ ContactPoint = {
 }
 
 
-ContactDetail = {"properties": {"name": Token, "telecom": ContactPoint}}
-ContactDetail["properties"]["telecom"].update({"type": "nested"})
+ContactDetail = {"properties": {"name": Token, "telecom": {**ContactPoint, "type": "nested"}}}
 
 Annotation = {
     "properties": {"authorReference": Reference, "authorString": Text, "text": Text, "time": Date}
@@ -183,8 +187,24 @@ Meta = {
     }
 }
 
+Expression = {
+    "properties": {
+        "description": Token,
+        "name": Token,
+        "language": Token,
+        "expression": Token,
+        "reference": Token,
+    }
+}
+
+Narrative = {"properties": {"status": Token, "div": SearchableText}}
+
+Count = Quantity
+Distance = Quantity
+
 fhir_data_types_maps = {
     "boolean": Boolean,
+    "base64Binary": Token,
     "integer": Integer,
     "string": Text,
     "decimal": Float,
@@ -205,6 +225,8 @@ fhir_data_types_maps = {
     "Coding": Coding,
     "CodeableConcept": CodeableConcept,
     "Quantity": Quantity,
+    "Distance": Distance,
+    "Count": Count,
     "Money": Money,
     "Duration": Duration,
     "Range": Range,
@@ -224,6 +246,8 @@ fhir_data_types_maps = {
     "RelatedArtifact": RelatedArtifact,
     "Signature": Signature,
     "Population": Population,
+    "Narrative": Narrative,
+    "Expression": Expression,
 }
 fhir_data_types_maps_STU3 = deepcopy(fhir_data_types_maps)
 fhir_data_types_maps_STU3.update(
