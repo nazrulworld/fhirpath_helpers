@@ -17,7 +17,13 @@ Boolean = {"type": "boolean", "store": False}
 Float = {"type": "float", "store": False}
 Integer = {"type": "integer", "store": False}
 Long = {"type": "long", "store": False}
-Token = {"type": "keyword", "index": True, "store": False, "normalizer": "fhir_normalizer"}
+Token = {
+    "type": "keyword",
+    "index": True,
+    "store": False,
+    "normalizer": "fhir_normalizer",
+    "fields": {"raw": {"type": "keyword"}},
+}
 ReferenceToken = {
     "type": "text",
     "index": True,
