@@ -189,7 +189,7 @@ Meta = {
         "versionId": Token,
         "lastUpdated": Date,
         "profile": Token,
-        "tag": {**Coding, "type": "nested"},
+        "tag": {**Coding, "type": "nested", "include_in_root": True},
     }
 }
 
