@@ -10,6 +10,9 @@ need to make compatibility
 """
 from copy import deepcopy
 
+# FIXME: anlyzers, tokenizers and normalizers MUST NOT be hardcoded here
+# TODO: make a function to parametrize this mess
+
 __author__ = "Md Nazrul Islam <email2nazrul@gmail.com>"
 date_pattern = "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?"
 datetime_pattern = "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"  # noqa
