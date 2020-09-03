@@ -54,6 +54,6 @@ setup(
     test_suite="tests",
     tests_require=test_requirements,
     url="https://github.com/nazrulworld/fhirpath_helpers",
-    version="0.1.0",
+    version="0.2.0.alpha1",
     zip_safe=False,
 )
