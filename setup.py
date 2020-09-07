@@ -12,7 +12,7 @@ with open("HISTORY.rst") as history_file:
 
 requirements = [
     "Click>=7.0",
-    "fhirpath @ git+https://github.com/arkhn/fhirpath@sv/handle-multiple-index#egg=fhirpath",
+    "fhirpath @ git+https://github.com/arkhn/fhirpath@0.8.0#egg=fhirpath",
     "DateTime",
     "requests",
     "tqdm",
@@ -54,6 +54,6 @@ setup(
     test_suite="tests",
     tests_require=test_requirements,
     url="https://github.com/nazrulworld/fhirpath_helpers",
-    version="0.2.0.alpha1",
+    version="0.2.0",
     zip_safe=False,
 )
