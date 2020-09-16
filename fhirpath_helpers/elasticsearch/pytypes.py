@@ -25,7 +25,10 @@ Token = {
     "index": True,
     "store": False,
     "normalizer": "fhir_normalizer",
-    "fields": {"raw": {"type": "keyword"}},
+    "fields": {
+        # index the raw text without normalization for exact matching
+        "raw": {"type": "keyword"}
+    },
 }
 ReferenceToken = {
     "type": "text",
@@ -35,12 +38,20 @@ ReferenceToken = {
 }
 PathToken = {"type": "text", "index": True, "store": False, "analyzer": "path_analyzer"}
 Text = {
-    "type": "text",
+    "type": "keyword",
     "index": True,
     "store": False,
-    "analyzer": "standard",
-    #    "index_prefixes": {"min_chars": 1, "max_chars": 10},
+    "fields": {
+        # index the tokenized text with normalization for full text search
+        "tokenized": {
+            "type": "text",
+            "analyzer": "standard",
+        },
+        # re-index the raw text without normalization for exact matching
+        "raw": {"type": "keyword"},
+    },
 }
+
 SearchableText = {"type": "text", "index": True, "analyzer": "standard", "store": False}
 
 Date = {
