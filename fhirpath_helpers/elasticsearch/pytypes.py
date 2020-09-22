@@ -43,10 +43,7 @@ Text = {
     "store": False,
     "fields": {
         # index the tokenized text with normalization for full text search
-        "tokenized": {
-            "type": "text",
-            "analyzer": "standard",
-        },
+        "tokenized": {"type": "text", "analyzer": "standard",},
         # re-index the raw text without normalization for exact matching
         "raw": {"type": "keyword"},
     },
@@ -61,12 +58,17 @@ Date = {
 }
 Time = {"type": "date", "format": "basic_t_time_no_millis", "store": False}
 
-Attachment = {"properties": {"url": Token, "language": Token, "title": Text, "creation": Date}}
+Attachment = {
+    "properties": {"url": Token, "language": Token, "title": Text, "creation": Date}
+}
 
 Coding = {"properties": {"system": Token, "code": Token, "display": Token}}
 
 CodeableConcept = {
-    "properties": {"text": Text, "coding": {"type": "nested", "properties": Coding["properties"]}}
+    "properties": {
+        "text": Text,
+        "coding": {"type": "nested", "properties": Coding["properties"]},
+    }
 }
 
 Period = {"properties": {"start": Date, "end": Date}}
@@ -83,7 +85,9 @@ Identifier = {
 
 Reference = {"properties": {"reference": ReferenceToken, "identifier": Identifier}}
 
-Quantity = {"properties": {"value": Float, "code": Token, "system": Token, "unit": Token}}
+Quantity = {
+    "properties": {"value": Float, "code": Token, "system": Token, "unit": Token}
+}
 
 Money = {"properties": {"value": Float, "currency": Token}}
 Money_STU3 = Quantity
@@ -115,14 +119,27 @@ HumanName = {
 Duration = Quantity
 
 ContactPoint = {
-    "properties": {"period": Period, "rank": Integer, "system": Token, "use": Token, "value": Text}
+    "properties": {
+        "period": Period,
+        "rank": Integer,
+        "system": Token,
+        "use": Token,
+        "value": Text,
+    }
 }
 
 
-ContactDetail = {"properties": {"name": Token, "telecom": {**ContactPoint, "type": "nested"}}}
+ContactDetail = {
+    "properties": {"name": Token, "telecom": {**ContactPoint, "type": "nested"}}
+}
 
 Annotation = {
-    "properties": {"authorReference": Reference, "authorString": Text, "text": Text, "time": Date}
+    "properties": {
+        "authorReference": Reference,
+        "authorString": Text,
+        "text": Text,
+        "time": Date,
+    }
 }
 
 Dosage = {
@@ -169,7 +186,9 @@ RelatedArtifact = {
     }
 }
 
-RelatedArtifact_STU3 = {"properties": {"type": Token, "url": Token, "resource": Reference}}
+RelatedArtifact_STU3 = {
+    "properties": {"type": Token, "url": Token, "resource": Reference}
+}
 
 
 Signature = {
@@ -184,7 +203,12 @@ Signature = {
 }
 
 Signature_STU3 = {
-    "properties": {"contentType": Token, "when": Date, "whoReference": Reference, "whoUri": Token}
+    "properties": {
+        "contentType": Token,
+        "when": Date,
+        "whoReference": Reference,
+        "whoUri": Token,
+    }
 }
 Population = {
     "properties": {

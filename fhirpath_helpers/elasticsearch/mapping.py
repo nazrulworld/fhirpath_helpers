@@ -58,7 +58,6 @@ def generate_mappings(fhir_release=None):
 
     for resource, paths_def in elements_paths.items():
         maps[resource] = create_resource_mapping(paths_def, data_maps)
-        maps[resource]["resourceType"] = data_maps["code"].copy()
 
     return maps
 
@@ -67,7 +66,9 @@ def build_elements_paths(resources_elements):
     """ """
     resources_elements_paths = defaultdict()
     default_paths = extract_elements_paths(resources_elements.pop("Resource"))
-    default_domain_paths = extract_elements_paths(resources_elements.pop("DomainResource"))
+    default_domain_paths = extract_elements_paths(
+        resources_elements.pop("DomainResource")
+    )
     for resource, elements in resources_elements.items():
         paths = extract_elements_paths(elements)
         apply_default_paths(resource, default_paths, paths)
@@ -91,7 +92,9 @@ def extract_elements_paths(elements):
             assert len(el.definition.types) > 1
             for ty in el.definition.types:
                 addon = ty.code[0].upper() + ty.code[1:]
-                paths.append((el.path.replace("[x]", addon), ty.code, (el.n_max != "1")))
+                paths.append(
+                    (el.path.replace("[x]", addon), ty.code, (el.n_max != "1"))
+                )
         else:
             paths.append((el.path, el.definition.types[0].code, (el.n_max != "1")))
     return paths
@@ -109,7 +112,10 @@ def add_mapping_meta(resource, mappings, fhir_release):
     """ """
     data = {
         "resourceType": resource,
-        "meta": {"lastUpdated": datetime.datetime().ISO8601(), "versionId": fhir_release},
+        "meta": {
+            "lastUpdated": datetime.datetime().ISO8601(),
+            "versionId": fhir_release,
+        },
         "mapping": {"properties": mappings},
     }
     return data
@@ -125,7 +131,11 @@ def create_resource_mapping(elements_paths_def, fhir_data_types_maps):
         mapped_elements = list()
         for path, code, multiple in elements_paths_def:
             if path not in mapped_elements:
-                children = [x for x in elements_paths_def if x[0].startswith(path) and x[0] != path]
+                children = [
+                    x
+                    for x in elements_paths_def
+                    if x[0].startswith(path) and x[0] != path
+                ]
                 mapped_elements.extend([path, *[c[0] for c in children]])
                 yield path, code, multiple, children
 
@@ -139,13 +149,19 @@ def create_resource_mapping(elements_paths_def, fhir_data_types_maps):
             if code == "BackboneElement":
                 map_ = {
                     "type": "nested",
-                    "properties": create_resource_mapping(children, fhir_data_types_maps),
+                    "properties": create_resource_mapping(
+                        children, fhir_data_types_maps
+                    ),
                 }
             elif code in ignored_datatype:
-                logging.debug(f"{path} won't be indexed in elasticsearch: type {code} is ignored")
+                logging.debug(
+                    f"{path} won't be indexed in elasticsearch: type {code} is ignored"
+                )
                 continue
             else:
-                logging.debug(f"{path} won't be indexed in elasticsearch: type {code} is unknown")
+                logging.debug(
+                    f"{path} won't be indexed in elasticsearch: type {code} is unknown"
+                )
                 raise
 
         if multiple and "type" not in map_:
@@ -153,6 +169,7 @@ def create_resource_mapping(elements_paths_def, fhir_data_types_maps):
 
         mapped[name] = map_
 
+    mapped["resourceType"] = fhir_data_types_maps["code"].copy()
     return mapped
 
 
