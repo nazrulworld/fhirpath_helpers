@@ -20,6 +20,12 @@ Long = {"type": "long", "store": False}
 Token = {"type": "keyword", "index": True, "store": False}
 KeywordToken = {"type": "keyword", "index": True, "store": False}
 PathToken = {"type": "text", "index": True, "store": False, "analyzer": "path_analyzer"}
+FhirReferenceToken = {
+    "type": "text",
+    "index": True,
+    "store": False,
+    "analyzer": "fhir_reference_analyzer",
+}
 Text = {
     "type": "text",
     "index": True,
@@ -36,7 +42,7 @@ Date = {
 }
 Time = {"type": "date", "format": "basic_t_time_no_millis", "store": False}
 
-Reference = {"properties": {"reference": KeywordToken}}
+Reference = {"properties": {"reference": FhirReferenceToken}}
 
 Attachment = {
     "properties": {"url": Token, "language": Token, "title": Text, "creation": Date}
@@ -79,6 +85,7 @@ Address = {
         "postalCode": Token,
         "state": Token,
         "use": Token,
+        "text": Text,
     }
 }
 
