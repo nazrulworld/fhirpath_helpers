@@ -44,8 +44,6 @@ def fhir_types_mapping(
         "index": True,
         "store": False,
         "fields": {
-            # index the tokenized text with normalization for full text search
-            "tokenized": {"type": "text", "analyzer": "standard"},
             # re-index the raw text without normalization for exact matching
             "raw": {"type": "keyword"},
         },
