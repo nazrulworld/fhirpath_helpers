@@ -2,12 +2,11 @@
 from collections import defaultdict
 from fhirpath.fhirspec import FhirSpecFactory
 from fhirpath.enums import FHIR_VERSION
-from .pytypes import fhir_data_types_maps
-from .pytypes import fhir_data_types_maps_STU3
-import sys
-import click
-import DateTime
+from .pytypes import fhir_types_mapping
+import datetime
 import json
+import logging
+import click
 
 __author__ = "Md Nazrul Islam <email2nazrul@gmail.com>"
 
@@ -22,22 +21,26 @@ ignored_datatype = [
     "SampledData",
     "Contributor",
     "ElementDefinition",
-    "ProductShelfLife"
+    "ProductShelfLife",
+    "Resource",
+    "Extension",
+    "SubstanceAmount",
 ]
 
 
-def generate_mappings(fhir_release=None):
+def generate_mappings(
+    fhir_release=None, reference_analyzer=None, token_normalizer=None
+):
     """ """
     fhir_release = fhir_release or FHIR_VERSION.R4.name
-
     fhir_spec = FhirSpecFactory.from_release(fhir_release)
 
     resources_elements = defaultdict()
 
     for definition_klass in fhir_spec.profiles.values():
-        if definition_klass.name == "Resource":
+        if definition_klass.name in ("Resource", "DomainResource"):
             # exceptional
-            resources_elements["Resource"] = definition_klass.elements
+            resources_elements[definition_klass.name] = definition_klass.elements
             continue
         if definition_klass.structure.subclass_of != "DomainResource":
             # we accept domain resource only
@@ -47,20 +50,27 @@ def generate_mappings(fhir_release=None):
 
     elements_paths = build_elements_paths(resources_elements)
 
-    maps = dict()
+    mappings = dict()
+    fhir_es_mappings = fhir_types_mapping(
+        fhir_release, reference_analyzer, token_normalizer
+    )
     for resource, paths_def in elements_paths.items():
-        maps[resource] = create_resource_mapping(paths_def, fhir_release)
+        mappings[resource] = create_resource_mapping(paths_def, fhir_es_mappings)
 
-    return maps
+    return mappings
 
 
 def build_elements_paths(resources_elements):
     """ """
     resources_elements_paths = defaultdict()
     default_paths = extract_elements_paths(resources_elements.pop("Resource"))
+    default_domain_paths = extract_elements_paths(
+        resources_elements.pop("DomainResource")
+    )
     for resource, elements in resources_elements.items():
         paths = extract_elements_paths(elements)
         apply_default_paths(resource, default_paths, paths)
+        apply_default_paths(resource, default_domain_paths, paths)
         resources_elements_paths[resource] = paths
 
     return resources_elements_paths
@@ -71,9 +81,7 @@ def extract_elements_paths(elements):
     paths = list()
 
     for el in elements:
-        if el.represents_class:
-            continue
-        if len(el.path.split(".")) != 2:
+        if el.is_main_profile_element:
             continue
         if len(el.definition.types) == 0:
             continue
@@ -82,7 +90,9 @@ def extract_elements_paths(elements):
             assert len(el.definition.types) > 1
             for ty in el.definition.types:
                 addon = ty.code[0].upper() + ty.code[1:]
-                paths.append((el.path.replace("[x]", addon), ty.code, (el.n_max != "1")))
+                paths.append(
+                    (el.path.replace("[x]", addon), ty.code, (el.n_max != "1"))
+                )
         else:
             paths.append((el.path, el.definition.types[0].code, (el.n_max != "1")))
     return paths
@@ -101,7 +111,7 @@ def add_mapping_meta(resource, mappings, fhir_release):
     data = {
         "resourceType": resource,
         "meta": {
-            "lastUpdated": DateTime.DateTime().ISO8601(),
+            "lastUpdated": datetime.datetime.now().isoformat(),
             "versionId": fhir_release,
         },
         "mapping": {"properties": mappings},
@@ -109,30 +119,53 @@ def add_mapping_meta(resource, mappings, fhir_release):
     return data
 
 
-def create_resource_mapping(elements_paths_def, fhir_release):
+def create_resource_mapping(elements_paths_def, fhir_es_mappings):
     """ """
     mapped = dict()
-    if fhir_release == "STU3":
-        data_maps = fhir_data_types_maps_STU3
-    else:
-        data_maps = fhir_data_types_maps
 
-    for path_, code, multiple in elements_paths_def:
-        name = path_.split(".")[-1]
+    # this generator function iterates over the list of elements definitions and groups
+    # children elements with their parents to reflect thbe nested resource structure.
+    def iterate_elements():
+        mapped_elements = list()
+        for path, code, multiple in elements_paths_def:
+            if path not in mapped_elements:
+                children = [
+                    x
+                    for x in elements_paths_def
+                    if x[0].startswith(path) and x[0] != path
+                ]
+                mapped_elements.extend([path, *[c[0] for c in children]])
+                yield path, code, multiple, children
+
+    for path, code, multiple, children in iterate_elements():
+        name = path.split(".")[-1]
         try:
-            map_ = data_maps[code].copy()
+            map_ = fhir_es_mappings[code].copy()
         except KeyError:
-            if code in ignored_datatype:
-                click.echo(f"datatype {code} doesnt found!", color=click.style("yellow"))
+            # if the element is of type BackboneElement, it means that it has no external definition
+            # and needs to be mapped dynamically based on its inline definition.
+            if code == "BackboneElement":
+                map_ = {
+                    "type": "nested",
+                    "properties": create_resource_mapping(children, fhir_es_mappings),
+                }
+            elif code in ignored_datatype:
+                logging.debug(
+                    f"{path} won't be indexed in elasticsearch: type {code} is ignored"
+                )
                 continue
-            raise
+            else:
+                logging.debug(
+                    f"{path} won't be indexed in elasticsearch: type {code} is unknown"
+                )
+                raise
 
         if multiple and "type" not in map_:
             map_.update({"type": "nested"})
 
         mapped[name] = map_
-    # add extra
-    mapped["resourceType"] = data_maps["code"].copy()
+
+    mapped["resourceType"] = fhir_es_mappings["code"].copy()
     return mapped
 
 
@@ -143,18 +176,20 @@ def write_resource_mapping(output_dir, resource, mappings, fhir_release):
     with open(path_, "w") as fp:
         text = json.dumps(data, indent=2)
         fp.write(text)
-    click.echo(
-        f"Mapping File has been written to {path_}",
-        color=click.style("green")
-    )
+    click.echo(f"Mapping File has been written to {path_}", color=click.style("green"))
 
 
-def make_and_write_es_mappings(output_dir, fhir_release):
+def make_and_write_es_mappings(
+    output_dir, fhir_release, reference_analyzer=None, token_normalizer=None
+):
     """ """
-    resources_mappings = generate_mappings(fhir_release)
+    resources_mappings = generate_mappings(
+        fhir_release, reference_analyzer, token_normalizer
+    )
 
     for resource, mappings in resources_mappings.items():
         write_resource_mapping(output_dir, resource, mappings, fhir_release)
     click.echo(
         f"Total {len(resources_mappings)} files have been written to {output_dir}",
-        color=click.style("green"))
+        color=click.style("green"),
+    )

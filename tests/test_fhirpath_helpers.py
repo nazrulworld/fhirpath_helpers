@@ -13,6 +13,7 @@ from fhirpath.fhirspec import FhirSpecFactory
 from fhirpath.enums import FHIR_VERSION
 from fhirpath_helpers.elasticsearch.mapping import generate_mappings
 
+
 @pytest.fixture
 def response():
     """Sample pytest fixture.
@@ -28,17 +29,18 @@ def test_content(response):
     # from bs4 import BeautifulSoup
     # assert 'GitHub' in BeautifulSoup(response.content).title.string
 
+
 def test_fhir_spec():
     """ """
     search_spec = FHIRSearchSpecFactory.from_release(FHIR_VERSION.R4.value)
     resources_elements = generate_mappings()
     pytest.set_trace()
     """
-    pat.elements[0].represents_class
+    pat.elements[0].is_main_profile_element
 True
-(Pdb) pat.elements[1].represents_class
+(Pdb) pat.elements[1].is_main_profile_element
 False
-(Pdb) pat.elements[2].represents_class
+(Pdb) pat.elements[2].is_main_profile_element
 False
 'Patient.multipleBirth[x]'>>>resources_elements["Patient"][10].definition.types
 (Pdb) resources_elements["Patient"][10].definition.types[0]
@@ -59,7 +61,7 @@ def test_command_line_interface():
     runner = CliRunner()
     result = runner.invoke(cli.main)
     assert result.exit_code == 0
-    assert 'fhirpath_helpers.cli.main' in result.output
-    help_result = runner.invoke(cli.main, ['--help'])
+    assert "fhirpath_helpers.cli.main" in result.output
+    help_result = runner.invoke(cli.main, ["--help"])
     assert help_result.exit_code == 0
-    assert '--help  Show this message and exit.' in help_result.output
+    assert "--help  Show this message and exit." in help_result.output
