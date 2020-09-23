@@ -41,8 +41,10 @@ def main(ctx, args=None):
 
 @main.command()
 @click.option("--fhir-release", "-R", type=click.STRING)
+@click.option("--reference-analyzer", type=click.STRING)
+@click.option("--token-normalizer", type=click.STRING)
 @click.argument("output-dir")
-def es_generate_mapping(fhir_release, output_dir):
+def es_generate_mapping(fhir_release, reference_analyzer, token_normalizer, output_dir):
     """ """
     if output_dir.startswith("./"):
         output_dir = os.path.dirname(os.path.abspath(__file__)) + output_dir[1:]
@@ -52,10 +54,12 @@ def es_generate_mapping(fhir_release, output_dir):
     if fhir_release:
         FHIR_VERSION[fhir_release]
     else:
-        fhir_release = FHIR_VERSION.R4.value
+        fhir_release = FHIR_VERSION.R4.name
 
     try:
-        make_and_write_es_mappings(output_dir, fhir_release)
+        make_and_write_es_mappings(
+            output_dir, fhir_release, reference_analyzer, token_normalizer
+        )
         return 0
     except Exception as exc:
         click.echo(str(exc), color=click.style("red", bold=True))
@@ -82,10 +86,14 @@ def fhirspec_build_minified_static_json(
 ):
     """ """
     if release == "R4" and version not in ("4.0.1", "4.0.0"):
-        sys.stderr.write(f"Invalid version {version} has been provided for release {release}\n")
+        sys.stderr.write(
+            f"Invalid version {version} has been provided for release {release}\n"
+        )
         return 1
     if release == "STU3" and version not in ("3.0.1", "3.0.2"):
-        sys.stderr.write(f"Invalid version {version} has been provided for release {release}\n")
+        sys.stderr.write(
+            f"Invalid version {version} has been provided for release {release}\n"
+        )
         return 1
     use_cache = no_cache is False
     cache_dir = CACHE_DIR / "spec"
@@ -104,7 +112,9 @@ def fhirspec_build_minified_static_json(
     version_info_file = cache_dir / version_info_hash
 
     definition_achieve_url = f"{base_url}/{release}/{version}-definitions.json.zip"
-    definition_achieve_hash = hashlib.md5(definition_achieve_url.encode()).digest().hex()
+    definition_achieve_hash = (
+        hashlib.md5(definition_achieve_url.encode()).digest().hex()
+    )
     definition_achieve_file = cache_dir / definition_achieve_hash
 
     if use_cache is False or not version_info_file.exists():

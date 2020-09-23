@@ -2,8 +2,7 @@
 from collections import defaultdict
 from fhirpath.fhirspec import FhirSpecFactory
 from fhirpath.enums import FHIR_VERSION
-from .pytypes import fhir_data_types_maps
-from .pytypes import fhir_data_types_maps_STU3
+from .pytypes import fhir_types_mapping
 import datetime
 import json
 import logging
@@ -29,10 +28,11 @@ ignored_datatype = [
 ]
 
 
-def generate_mappings(fhir_release=None):
+def generate_mappings(
+    fhir_release=None, reference_analyzer=None, token_normalizer=None
+):
     """ """
     fhir_release = fhir_release or FHIR_VERSION.R4.name
-
     fhir_spec = FhirSpecFactory.from_release(fhir_release)
 
     resources_elements = defaultdict()
@@ -50,16 +50,14 @@ def generate_mappings(fhir_release=None):
 
     elements_paths = build_elements_paths(resources_elements)
 
-    maps = dict()
-    if fhir_release == "STU3":
-        data_maps = fhir_data_types_maps_STU3
-    else:
-        data_maps = fhir_data_types_maps
-
+    mappings = dict()
+    fhir_es_mappings = fhir_types_mapping(
+        fhir_release, reference_analyzer, token_normalizer
+    )
     for resource, paths_def in elements_paths.items():
-        maps[resource] = create_resource_mapping(paths_def, data_maps)
+        mappings[resource] = create_resource_mapping(paths_def, fhir_es_mappings)
 
-    return maps
+    return mappings
 
 
 def build_elements_paths(resources_elements):
@@ -113,7 +111,7 @@ def add_mapping_meta(resource, mappings, fhir_release):
     data = {
         "resourceType": resource,
         "meta": {
-            "lastUpdated": datetime.datetime().ISO8601(),
+            "lastUpdated": datetime.datetime.now().isoformat(),
             "versionId": fhir_release,
         },
         "mapping": {"properties": mappings},
@@ -121,7 +119,7 @@ def add_mapping_meta(resource, mappings, fhir_release):
     return data
 
 
-def create_resource_mapping(elements_paths_def, fhir_data_types_maps):
+def create_resource_mapping(elements_paths_def, fhir_es_mappings):
     """ """
     mapped = dict()
 
@@ -142,16 +140,14 @@ def create_resource_mapping(elements_paths_def, fhir_data_types_maps):
     for path, code, multiple, children in iterate_elements():
         name = path.split(".")[-1]
         try:
-            map_ = fhir_data_types_maps[code].copy()
+            map_ = fhir_es_mappings[code].copy()
         except KeyError:
             # if the element is of type BackboneElement, it means that it has no external definition
             # and needs to be mapped dynamically based on its inline definition.
             if code == "BackboneElement":
                 map_ = {
                     "type": "nested",
-                    "properties": create_resource_mapping(
-                        children, fhir_data_types_maps
-                    ),
+                    "properties": create_resource_mapping(children, fhir_es_mappings),
                 }
             elif code in ignored_datatype:
                 logging.debug(
@@ -169,7 +165,7 @@ def create_resource_mapping(elements_paths_def, fhir_data_types_maps):
 
         mapped[name] = map_
 
-    mapped["resourceType"] = fhir_data_types_maps["code"].copy()
+    mapped["resourceType"] = fhir_es_mappings["code"].copy()
     return mapped
 
 
@@ -183,9 +179,13 @@ def write_resource_mapping(output_dir, resource, mappings, fhir_release):
     click.echo(f"Mapping File has been written to {path_}", color=click.style("green"))
 
 
-def make_and_write_es_mappings(output_dir, fhir_release):
+def make_and_write_es_mappings(
+    output_dir, fhir_release, reference_analyzer=None, token_normalizer=None
+):
     """ """
-    resources_mappings = generate_mappings(fhir_release)
+    resources_mappings = generate_mappings(
+        fhir_release, reference_analyzer, token_normalizer
+    )
 
     for resource, mappings in resources_mappings.items():
         write_resource_mapping(output_dir, resource, mappings, fhir_release)
