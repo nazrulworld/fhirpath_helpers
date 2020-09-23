@@ -37,15 +37,7 @@ def fhir_types_mapping(
         "store": False,
     }
     if reference_analyzer:
-        ReferenceToken.update(
-            {
-                "analyzer": reference_analyzer,
-                "fields": {
-                    # index the raw text without normalization for exact matching
-                    "raw": {"type": "keyword"}
-                },
-            }
-        )
+        ReferenceToken.update({"analyzer": reference_analyzer})
 
     Text = {
         "type": "keyword",
